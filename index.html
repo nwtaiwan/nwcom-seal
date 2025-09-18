@@ -68,19 +68,25 @@
                 <div>
                     <label for="fontFamily" class="block text-sm font-medium mb-1">字體</label>
                     <select id="fontFamily" class="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition">
-                        <option value="'Noto Serif TC', serif">隸書風格</option>
-                        <option value="'KaiTi', sans-serif">楷體</option>
-                        <option value="'FangSong', sans-serif">仿宋體</option>
-                        <option value="'Noto Serif SC', serif">思源宋體</option>
-                        <option value="'Noto Sans TC', sans-serif">思源黑體 (現代)</option>
-                        <option value="'ZCOOL XiaoWei', sans-serif">站酷小薇體</option>
-                        <option value="'ZCOOL KuaiLe', sans-serif">站酷快樂體</option>
-                        <option value="'ZCOOL QingKe HuangYou', sans-serif">站酷慶科黃油體</option>
-                        <option value="'Ma Shan Zheng', cursive">馬善政書法</option>
-                        <option value="'Long Cang', cursive">龍藏體</option>
-                        <option value="'Zhi Mang Xing', cursive">之芒行書</option>
-                        <option value="'Liu Jian Mao Cao', cursive">流建毛草</option>
+                        <optgroup label="經典標準">
+                            <option value="'Noto Sans TC', sans-serif">思源黑體 (似微軟正黑體)</option>
+                            <option value="'Noto Serif TC', serif">思源宋體 (似新細明體)</option>
+                            <option value="'KaiTi', sans-serif">楷體 (系統預設, 似標楷體)</option>
+                            <option value="'FangSong', sans-serif">仿宋體 (系統預設)</option>
+                        </optgroup>
+                        <optgroup label="書法風格">
+                            <option value="'ZCOOL XiaoWei', sans-serif">站酷小薇體 (古典)</option>
+                            <option value="'Ma Shan Zheng', cursive">馬善政書法 (毛筆)</option>
+                            <option value="'Zhi Mang Xing', cursive">之芒行書 (手寫)</option>
+                            <option value="'Liu Jian Mao Cao', cursive">流建毛草 (狂草)</option>
+                            <option value="'Long Cang', cursive">龍藏體 (灑脫)</option>
+                        </optgroup>
+                        <optgroup label="藝術趣味">
+                            <option value="'ZCOOL KuaiLe', sans-serif">站酷快樂體 (可愛)</option>
+                            <option value="'ZCOOL QingKe HuangYou', sans-serif">站酷慶科黃油體 (圓潤)</option>
+                        </optgroup>
                     </select>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 md:hidden">註：手機版字體可能會有異常情形</p>
                 </div>
                 <div class="flex space-x-4">
                     <div class="w-1/2">
