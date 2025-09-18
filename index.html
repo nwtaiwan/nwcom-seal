@@ -3,467 +3,598 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>西北社區財務系統</title>
+    <title>西北印章生成小工具</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=KaiTi&family=FangSong&display=swap" rel="stylesheet">
     <style>
-        /* 自訂樣式，用於設定面板的顯示和隱藏動畫 */
-        .modal {
+        body {
+            font-family: 'Inter', 'Noto Serif TC', sans-serif;
+            touch-action: manipulation;
+        }
+        .canvas-circle {
+            clip-path: circle(50% at 50% 50%);
+        }
+        input, select, button {
+            -webkit-tap-highlight-color: transparent;
+        }
+        #sealCanvas.editable {
+            cursor: default;
+        }
+        /* 隱藏/顯示區塊的通用樣式 */
+        .control-container.hidden {
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            margin-top: 0;
+            overflow: hidden;
+        }
+        .control-container {
+            max-height: 500px;
+            opacity: 1;
+            transition: all 0.5s ease-in-out;
+        }
+        /* 美化檔案上傳按鈕 */
+        input[type="file"] {
             display: none;
-            transition: opacity 0.3s ease-in-out;
-        }
-        .modal.active {
-            display: flex;
-        }
-        .modal-content {
-            transform: scale(0.9);
-            transition: transform 0.3s ease-in-out;
-        }
-        .modal.active .modal-content {
-            transform: scale(1);
-        }
-        /* 美化捲軸 */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555;
         }
     </style>
 </head>
-<body class="bg-red-600 flex items-center justify-center h-screen font-sans">
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen flex items-center justify-center p-4">
 
-    <!-- 主登入畫面 -->
-    <div class="w-full max-w-md p-4 space-y-3 bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl text-center">
-        <img src="https://static.wixstatic.com/media/6148f9_56377cef73c1498f95a2c3057b89f2ed~mv2.png" alt="社區Logo" class="w-[120px] h-[60px] mx-auto mb-2">
-        
-        <div class="text-center">
-             <span id="communityNameDisplay" class="block text-[20px] font-bold text-red-600">西北社區</span>
-             <span class="block text-[20px] text-gray-800">財務系統</span>
-        </div>
-        
-        <!-- 登入表單 -->
-        <form id="loginForm" class="space-y-4 text-left">
-            <div>
-                 <div class="flex justify-between items-center mb-1">
-                    <label for="username" class="text-base font-medium text-gray-700">帳號</label>
-                    <div class="flex items-center text-base">
-                        <input id="rememberMe" name="rememberMe" type="checkbox" class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
-                        <label for="rememberMe" class="ml-2 text-gray-700">記住帳號</label>
+    <div class="w-full max-w-6xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col lg:flex-row">
+        <!-- 控制面板 -->
+        <div class="w-full lg:w-2/5 xl:w-1/3 p-6 md:p-8 space-y-6 bg-gray-50 dark:bg-gray-800 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-gray-700 overflow-y-auto" style="max-height: 90vh;">
+            <header>
+                <h1 class="text-2xl font-bold text-red-600">西北印章生成小工具</h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">西北用心  生活安心</p>
+            </header>
+            
+            <div class="space-y-4">
+                <!-- 基本設定 -->
+                <div>
+                    <label for="sealText" class="block text-sm font-medium mb-1">印章文字 (1-30字)</label>
+                    <input type="text" id="sealText" value="陳大文" maxlength="30" class="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition">
+                </div>
+                <div>
+                    <label for="sealShape" class="block text-sm font-medium mb-1">印章樣式</label>
+                    <select id="sealShape" class="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition">
+                        <option value="square">方章</option>
+                        <option value="circle">圓章</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="fontFamily" class="block text-sm font-medium mb-1">字體</label>
+                    <select id="fontFamily" class="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition">
+                        <option value="'Noto Serif TC', serif">隸書風格</option>
+                        <option value="'KaiTi', sans-serif">楷體</option>
+                        <option value="'FangSong', sans-serif">仿宋體</option>
+                    </select>
+                </div>
+                <div class="flex space-x-4">
+                    <div class="w-1/2">
+                        <label for="sealWidth" class="block text-sm font-medium mb-1">寬度 (mm)</label>
+                        <input type="number" id="sealWidth" value="30" min="10" max="100" class="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition">
+                    </div>
+                     <div class="w-1/2">
+                        <label for="sealHeight" class="block text-sm font-medium mb-1">高度 (mm)</label>
+                        <input type="number" id="sealHeight" value="30" min="10" max="100" class="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition">
                     </div>
                 </div>
-                <input id="username" name="username" type="text" required class="text-base block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="請輸入您的帳號">
-            </div>
-            <div>
-                <label for="password" class="text-base font-medium text-gray-700">密碼</label>
-                <div class="relative mt-1">
-                    <input id="password" name="password" type="password" required class="text-base block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 pr-10" placeholder="請輸入您的密碼">
-                    <button type="button" id="togglePasswordVisibility" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700 cursor-pointer">
-                        <svg id="eyeIcon" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                        </svg>
-                        <svg id="eyeOffIcon" class="h-5 w-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064 7 9.542 7 .847 0 1.673.124 2.458.352M4.935 4.935l14.13 14.13M10.5 10.5a2.5 2.5 0 003.536 3.536"></path>
-                        </svg>
+                 <div>
+                    <label for="borderWidth" class="block text-sm font-medium mb-1">邊框寬度: <span id="borderWidthValue">10</span></label>
+                    <input type="range" id="borderWidth" min="1" max="50" value="10" class="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-red-600">
+                </div>
+                
+                <!-- 圓角設定 (僅方章顯示) -->
+                <div id="cornerRadiusContainer" class="control-container">
+                    <label for="cornerRadius" class="block text-sm font-medium mb-1">圓角半徑: <span id="cornerRadiusValue">0</span></label>
+                    <input type="range" id="cornerRadius" min="0" max="100" value="0" class="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-red-600">
+                </div>
+                
+                 <div class="pt-4 border-t dark:border-gray-700">
+                    <button id="resetBtn" class="w-full bg-gray-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-400 focus:ring-opacity-50 transition">
+                        重設設定
                     </button>
                 </div>
-            </div>
-            <button type="submit" class="w-full flex justify-center py-2 px-3 border border-transparent rounded-lg shadow-lg text-base font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-150 ease-in-out">
-                登入
-            </button>
-        </form>
-        <div id="loginMessage" class="text-center text-red-500 font-medium h-4"></div>
-    </div>
 
-    <!-- 左下角設定按鈕 -->
-    <button id="settingsButton" class="fixed bottom-0 left-0 w-[10px] h-[10px] bg-transparent cursor-pointer" title="開啟設定"></button>
-    
-    <!-- 設定密碼驗證 Modal -->
-    <div id="settingsPasswordModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4">
-        <div class="modal-content bg-white rounded-xl shadow-xl w-full max-w-sm">
-            <div class="p-4 border-b">
-                <h2 class="text-xl font-bold text-gray-800">管理員驗證</h2>
-            </div>
-            <div class="p-4">
-                <form id="settingsPasswordForm">
-                    <label for="settingsPassword" class="text-sm font-medium text-gray-700">請輸入管理密碼</label>
-                    <input type="password" id="settingsPassword" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                    <div id="passwordErrorMessage" class="text-red-500 text-sm h-4 mt-1"></div>
-                    <div class="mt-4 flex justify-end space-x-2">
-                         <button type="button" id="closePasswordModalButton" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition">取消</button>
-                        <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition">確認</button>
+                <!-- 手動微調開關 -->
+                <div class="pt-4 border-t dark:border-gray-700">
+                    <label for="manualAdjustToggle" class="flex items-center justify-between cursor-pointer">
+                        <span class="font-medium">啟用畫布內編輯</span>
+                        <div class="relative">
+                            <input type="checkbox" id="manualAdjustToggle" class="sr-only peer">
+                            <div class="w-14 h-8 bg-gray-300 rounded-full peer dark:bg-gray-600 peer-checked:bg-red-600"></div>
+                            <div class="absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform peer-checked:translate-x-6"></div>
+                        </div>
+                    </label>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">啟用後可直接在右側畫布上點擊、拖曳、縮放單一文字。</p>
+                </div>
+
+                <!-- 手動微調控制項 -->
+                <div id="manualControls" class="space-y-4 pt-4 border-t dark:border-gray-700 control-container hidden">
+                     <p id="manualHint" class="text-sm text-center text-red-500">請在右側畫布點擊一個文字</p>
+                     <div>
+                        <label for="fontSize" class="block text-sm font-medium mb-1">字體大小: <span id="fontSizeValue">80</span></label>
+                        <input type="range" id="fontSize" min="10" max="500" value="80" class="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-red-600" disabled>
                     </div>
-                </form>
+                    <div>
+                        <label for="scaleX" class="block text-sm font-medium mb-1">文字寬度: <span id="scaleXValue">100</span>%</label>
+                        <input type="range" id="scaleX" min="10" max="300" value="100" class="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-red-600" disabled>
+                    </div>
+                     <div>
+                        <label for="scaleY" class="block text-sm font-medium mb-1">文字高度: <span id="scaleYValue">100</span>%</label>
+                        <input type="range" id="scaleY" min="10" max="300" value="100" class="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-red-600" disabled>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- 設定面板 (Modal) -->
-    <div id="settingsModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4">
-        <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
-                <h2 class="text-2xl font-bold text-gray-800">基本設定</h2>
-                <button id="closeModalButton" class="text-gray-400 hover:text-gray-600 transition">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        <!-- 預覽與下載 -->
+        <div class="w-full lg:w-3/5 xl:w-2/3 p-6 md:p-8 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900/50">
+            <!-- 動作工具列 -->
+            <div class="w-full max-w-md flex justify-center space-x-2 mb-4">
+                <button id="undoBtn" class="p-2 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.707 3.293a1 1 0 010 1.414L5.414 7H11a7 7 0 017 7v2a1 1 0 11-2 0v-2a5 5 0 00-5-5H5.414l2.293 2.293a1 1 0 11-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                </button>
+                <button id="redoBtn" class="p-2 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.293 3.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 9H9a5 5 0 00-5 5v2a1 1 0 11-2 0v-2a7 7 0 017-7h5.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                 </button>
             </div>
+
+            <div id="canvasContainer" class="w-full max-w-md flex items-center justify-center mb-6">
+                <canvas id="sealCanvas" class="rounded-lg shadow-inner bg-white dark:bg-gray-700/50 max-w-full max-h-full"></canvas>
+            </div>
             
-            <div class="px-6 pb-6 pt-5 flex-grow overflow-y-auto space-y-4">
-                <!-- 訊息提示 -->
-                <div id="settingsMessage" class="mb-2 text-center text-green-600 font-medium h-5"></div>
-
-                 <!-- 社區名稱設定 -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h3 class="text-lg font-semibold text-gray-700 mb-2">社區名稱設定</h3>
-                    <div class="flex flex-wrap gap-4 items-end">
-                        <div class="flex-grow">
-                            <label for="communityNameInput" class="text-sm font-medium text-gray-700">新名稱</label>
-                            <input type="text" id="communityNameInput" placeholder="例如：西北社區" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                        </div>
-                        <div class="flex-shrink-0">
-                            <button id="saveCommunityNameButton" class="w-full sm:w-auto flex-shrink-0 px-5 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition">儲存名稱</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 帳號管理 -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h3 class="text-lg font-semibold text-gray-700 mb-2">帳號管理</h3>
-                    
-                    <!-- 新增/編輯帳號表單 -->
-                    <form id="accountForm" class="mb-4 flex flex-wrap gap-4 items-end">
-                        <input type="hidden" id="editUserId">
-                        <div class="flex-grow" style="flex-basis: 12rem;">
-                            <label for="accountUsername" class="text-sm font-medium text-gray-700">帳號</label>
-                            <input type="text" id="accountUsername" placeholder="新帳號" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                        </div>
-                        <div class="flex-grow" style="flex-basis: 12rem;">
-                            <label for="accountPassword" class="text-sm font-medium text-gray-700">密碼</label>
-                            <input type="text" id="accountPassword" placeholder="新密碼" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                        </div>
-                        <div class="flex-grow" style="flex-basis: 12rem;">
-                            <label for="accountRedirectUrl" class="text-sm font-medium text-gray-700">代碼</label>
-                            <div class="flex items-center mt-1">
-                                <input type="text" id="accountRedirectUrl" placeholder="請輸入代碼" required class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-2 w-full sm:w-auto">
-                            <button type="submit" id="accountFormSubmitButton" class="w-full sm:w-auto flex-shrink-0 px-5 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition">新增帳號</button>
-                            <button type="button" id="cancelEditButton" class="hidden w-full sm:w-auto flex-shrink-0 px-5 py-2 bg-gray-400 text-white rounded-md hover:bg-gray-500 transition">取消編輯</button>
-                        </div>
-                    </form>
-                    
-                    <!-- 帳號列表 -->
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full bg-white border border-gray-200 rounded-lg">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">帳號</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">密碼</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">代碼</th>
-                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="userList" class="divide-y divide-gray-200">
-                                <!-- 使用 JavaScript 動態填入 -->
-                            </tbody>
-                        </table>
-                    </div>
+            <div class="w-full max-w-sm space-y-3">
+                 <button id="downloadBtn" class="w-full bg-red-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-500 focus:ring-opacity-50 transition-transform transform hover:scale-105 active:scale-100 flex items-center justify-center space-x-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    <span>下載印章 (PNG)</span>
+                </button>
+                <div class="flex space-x-3">
+                    <button id="saveJsonBtn" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-opacity-50 transition">儲存設定 (JSON)</button>
+                    <button id="loadJsonBtn" class="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-opacity-50 transition">匯入設定</button>
+                    <input type="file" id="fileInput" accept=".json">
                 </div>
             </div>
+            <p id="messageBox" class="text-center text-sm text-red-500 mt-4 h-5"></p>
         </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // DOM 元素
-            const loginForm = document.getElementById('loginForm');
-            const loginMessage = document.getElementById('loginMessage');
-            const usernameInput = document.getElementById('username');
-            const passwordInput = document.getElementById('password');
-            const rememberMeCheckbox = document.getElementById('rememberMe');
-            const togglePasswordVisibilityButton = document.getElementById('togglePasswordVisibility');
-            const eyeIcon = document.getElementById('eyeIcon');
-            const eyeOffIcon = document.getElementById('eyeOffIcon');
-            const communityNameDisplay = document.getElementById('communityNameDisplay');
-            
-            const settingsButton = document.getElementById('settingsButton');
-            const settingsModal = document.getElementById('settingsModal');
-            const closeModalButton = document.getElementById('closeModalButton');
-            
-            const settingsPasswordModal = document.getElementById('settingsPasswordModal');
-            const settingsPasswordForm = document.getElementById('settingsPasswordForm');
-            const settingsPasswordInput = document.getElementById('settingsPassword');
-            const passwordErrorMessage = document.getElementById('passwordErrorMessage');
-            const closePasswordModalButton = document.getElementById('closePasswordModalButton');
+        // --- DOM Elements ---
+        const sealCanvas = document.getElementById('sealCanvas');
+        const ctx = sealCanvas.getContext('2d');
+        const sealText = document.getElementById('sealText'), sealShape = document.getElementById('sealShape'), fontFamily = document.getElementById('fontFamily'), sealWidth = document.getElementById('sealWidth'), sealHeight = document.getElementById('sealHeight'), borderWidth = document.getElementById('borderWidth'), borderWidthValue = document.getElementById('borderWidthValue'), downloadBtn = document.getElementById('downloadBtn'), messageBox = document.getElementById('messageBox');
+        const cornerRadiusContainer = document.getElementById('cornerRadiusContainer'), cornerRadius = document.getElementById('cornerRadius'), cornerRadiusValue = document.getElementById('cornerRadiusValue');
+        const manualAdjustToggle = document.getElementById('manualAdjustToggle'), manualControls = document.getElementById('manualControls'), manualHint = document.getElementById('manualHint'), fontSize = document.getElementById('fontSize'), fontSizeValue = document.getElementById('fontSizeValue'), scaleX = document.getElementById('scaleX'), scaleXValue = document.getElementById('scaleXValue'), scaleY = document.getElementById('scaleY'), scaleYValue = document.getElementById('scaleYValue');
+        const undoBtn = document.getElementById('undoBtn'), redoBtn = document.getElementById('redoBtn'), resetBtn = document.getElementById('resetBtn'), saveJsonBtn = document.getElementById('saveJsonBtn'), loadJsonBtn = document.getElementById('loadJsonBtn'), fileInput = document.getElementById('fileInput');
 
-            const settingsMessage = document.getElementById('settingsMessage');
-            const communityNameInput = document.getElementById('communityNameInput');
-            const saveCommunityNameButton = document.getElementById('saveCommunityNameButton');
+        // --- State Management ---
+        let characters = [];
+        let selectedCharIndex = -1;
+        let isDragging = false;
+        let isResizing = false;
+        let resizeHandle = null;
+        let resizeHandleSize = 10;
+        let dragStartX, dragStartY, charStart;
+        const MM_TO_PX_RATIO = 12;
+        let history = [];
+        let historyIndex = -1;
 
-            const accountForm = document.getElementById('accountForm');
-            const accountUsernameInput = document.getElementById('accountUsername');
-            const accountPasswordInput = document.getElementById('accountPassword');
-            const accountRedirectUrlInput = document.getElementById('accountRedirectUrl');
-            const accountFormSubmitButton = document.getElementById('accountFormSubmitButton');
-            const editUserIdInput = document.getElementById('editUserId');
-            const cancelEditButton = document.getElementById('cancelEditButton');
-            const userList = document.getElementById('userList');
+        // --- Core Functions ---
+        function getCanvasSize() {
+            const width = Math.max(100, (parseInt(sealWidth.value) || 30) * MM_TO_PX_RATIO);
+            const height = Math.max(100, (parseInt(sealHeight.value) || 30) * MM_TO_PX_RATIO);
+            return { width, height };
+        }
 
-            // --- 資料管理 ---
-            const USERS_KEY = 'loginSystem_users';
-            const REMEMBERED_USER_KEY = 'loginSystem_rememberedUser';
-            const COMMUNITY_NAME_KEY = 'loginSystem_communityName';
-            const URL_PREFIX = 'https://nwtaiwan.github.io/';
+        function updateCanvasAndRedraw(saveToHistory = false) {
+            const { width, height } = getCanvasSize();
+            sealCanvas.width = width;
+            sealCanvas.height = height;
+            const canvasContainer = document.getElementById('canvasContainer');
+            canvasContainer.style.aspectRatio = width / height;
+            generateSeal();
+            if (saveToHistory) saveState();
+        }
 
-            // 取得使用者資料，若無則初始化
-            let users = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
-            if (users.length === 0) {
-                // 如果是第一次使用，建立一個預設帳號
-                users.push({ 
-                    id: Date.now(), 
-                    username: 'admin', 
-                    password: 'password',
-                    redirectUrl: 'https://nwtaiwan.github.io/default'
-                });
-                saveUsers();
+        function resetCharacterState(saveToHistory = true) {
+            const text = sealText.value.trim();
+            const { width, height } = getCanvasSize();
+            const shape = sealShape.value;
+            const currentBorderWidth = parseInt(borderWidth.value);
+            const padding = Math.min(width, height) * 0.1;
+            const drawableWidth = width - (currentBorderWidth * 2) - padding;
+            const drawableHeight = height - (currentBorderWidth * 2) - padding;
+            const halfWidth = width / 2;
+            const halfHeight = height / 2;
+            const initialFontSize = Math.min(width, height) / Math.max(4, Math.ceil(Math.sqrt(text.length))) * 0.8;
+            characters = text.split('').map((char) => ({ char, x: 0, y: 0, size: initialFontSize, scaleX: 1, scaleY: 1 }));
+            if (characters.length === 0) {
+                if (saveToHistory) saveState();
+                return;
             }
-
-            function saveUsers() {
-                localStorage.setItem(USERS_KEY, JSON.stringify(users));
-            }
-
-            // --- 社區名稱邏輯 ---
-            function loadCommunityName() {
-                const savedName = localStorage.getItem(COMMUNITY_NAME_KEY) || '西北社區';
-                communityNameDisplay.textContent = savedName;
-                communityNameInput.value = savedName;
-                document.title = savedName + '財務系統';
-            }
-            
-            saveCommunityNameButton.addEventListener('click', () => {
-                const newName = communityNameInput.value.trim();
-                if (newName) {
-                    localStorage.setItem(COMMUNITY_NAME_KEY, newName);
-                    loadCommunityName();
-                    showSettingsMessage('社區名稱已更新！');
-                } else {
-                    showSettingsMessage('社區名稱不能為空！', 'error');
+            if (shape === 'square') {
+                const len = characters.length;
+                const cols = width >= height ? Math.ceil(Math.sqrt(len * (width / height))) : Math.ceil(Math.sqrt(len));
+                const rows = Math.ceil(len / cols);
+                const cellWidth = drawableWidth / cols;
+                const cellHeight = drawableHeight / rows;
+                const gridWidth = cellWidth * cols;
+                const gridHeight = cellHeight * rows;
+                const startX = halfWidth - gridWidth / 2;
+                const startY = halfHeight - gridHeight / 2;
+                let charIndex = 0;
+                for (let c = cols - 1; c >= 0; c--) {
+                    for (let r = 0; r < rows; r++) {
+                        if (charIndex < len) {
+                            characters[charIndex].x = startX + (c * cellWidth + cellWidth / 2);
+                            characters[charIndex].y = startY + (r * cellHeight + cellHeight / 2);
+                            charIndex++;
+                        }
+                    }
                 }
-            });
-
-            // --- 記住帳號邏輯 ---
-            function loadRememberedUser() {
-                const rememberedUsername = localStorage.getItem(REMEMBERED_USER_KEY);
-                if (rememberedUsername) {
-                    usernameInput.value = rememberedUsername;
-                    rememberMeCheckbox.checked = true;
-                }
-            }
-
-            function handleRememberMe(username) {
-                if (rememberMeCheckbox.checked) {
-                    localStorage.setItem(REMEMBERED_USER_KEY, username);
-                } else {
-                    localStorage.removeItem(REMEMBERED_USER_KEY);
-                }
-            }
-
-            // --- 密碼可視性切換 ---
-            togglePasswordVisibilityButton.addEventListener('click', () => {
-                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-                passwordInput.setAttribute('type', type);
-                eyeIcon.classList.toggle('hidden');
-                eyeOffIcon.classList.toggle('hidden');
-            });
-
-            // --- 登入邏輯 ---
-            loginForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const username = e.target.username.value;
-                const password = e.target.password.value;
-                handleRememberMe(username);
-                const user = users.find(u => u.username === username && u.password === password);
-                if (user) {
-                    loginMessage.textContent = '登入成功！正在跳轉...';
-                    loginMessage.classList.remove('text-red-500');
-                    loginMessage.classList.add('text-green-500');
-                    setTimeout(() => {
-                        window.location.href = user.redirectUrl;
-                    }, 1000);
-                } else {
-                    loginMessage.textContent = '帳號或密碼錯誤！';
-                    loginMessage.classList.remove('text-green-500');
-                    loginMessage.classList.add('text-red-500');
-                }
-            });
-
-            // --- 設定面板 & 密碼驗證邏輯 ---
-            settingsButton.addEventListener('click', () => {
-                settingsPasswordModal.classList.add('active');
-                settingsPasswordInput.focus();
-            });
-
-            function closePasswordModal() {
-                settingsPasswordModal.classList.remove('active');
-                settingsPasswordForm.reset();
-                passwordErrorMessage.textContent = '';
-            }
-            
-            closePasswordModalButton.addEventListener('click', closePasswordModal);
-
-            settingsPasswordForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const today = new Date();
-                const year = today.getFullYear();
-                const month = String(today.getMonth() + 1).padStart(2, '0');
-                const day = String(today.getDate()).padStart(2, '0');
-                const correctPassword = `${year}${month}${day}0217`;
-
-                if (settingsPasswordInput.value === correctPassword) {
-                    closePasswordModal();
-                    settingsModal.classList.add('active');
-                    renderUserList();
-                } else {
-                    passwordErrorMessage.textContent = '密碼錯誤！';
-                }
-            });
-            
-            closeModalButton.addEventListener('click', () => {
-                settingsModal.classList.remove('active');
-            });
-
-            // --- 帳號管理邏輯 ---
-            function renderUserList() {
-                userList.innerHTML = '';
-                if(users.length === 0) {
-                    userList.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-gray-500">目前沒有任何帳號</td></tr>`;
-                    return;
-                }
-                users.forEach(user => {
-                    const tr = document.createElement('tr');
-                    const displayUrl = user.redirectUrl.startsWith(URL_PREFIX) 
-                        ? user.redirectUrl.substring(URL_PREFIX.length) 
-                        : user.redirectUrl;
-
-                    tr.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${escapeHTML(user.username)}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${escapeHTML(user.password)}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate">
-                            ${escapeHTML(displayUrl)}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium space-x-2">
-                            <button class="edit-btn text-indigo-600 hover:text-indigo-900" data-id="${user.id}">編輯</button>
-                            <button class="delete-btn text-red-600 hover:text-red-900" data-id="${user.id}">刪除</button>
-                        </td>
-                    `;
-                    userList.appendChild(tr);
+            } else {
+                const radius = Math.min(drawableWidth, drawableHeight) / 2;
+                const totalAngle = Math.min(characters.length * 0.8, Math.PI * 1.9);
+                const angleStep = totalAngle / characters.length;
+                const startAngle = -Math.PI / 2 + totalAngle / 2;
+                characters.forEach((char, i) => {
+                    const angle = startAngle - (i * angleStep) - (angleStep / 2);
+                    char.x = halfWidth + radius * Math.sin(angle);
+                    char.y = halfHeight - radius * Math.cos(angle);
                 });
             }
+            selectedCharIndex = -1;
+            updateManualControls();
+            if (saveToHistory) saveState();
+        }
 
-            accountForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const username = accountUsernameInput.value.trim();
-                const password = accountPasswordInput.value.trim();
-                const urlSuffix = accountRedirectUrlInput.value.trim();
-                const userId = editUserIdInput.value;
+        function generateSeal() {
+            const { width, height } = getCanvasSize();
+            ctx.clearRect(0, 0, width, height);
+            const currentBorderWidth = parseInt(borderWidth.value);
+            const halfWidth = width / 2;
+            const halfHeight = height / 2;
+            ctx.strokeStyle = '#c53030';
+            ctx.lineWidth = currentBorderWidth;
+            if (sealShape.value === 'square') {
+                sealCanvas.style.borderRadius = '';
+                sealCanvas.classList.remove('canvas-circle');
+                const x = currentBorderWidth / 2;
+                const y = currentBorderWidth / 2;
+                const w = width - currentBorderWidth;
+                const h = height - currentBorderWidth;
+                let r = parseInt(cornerRadius.value);
+                if (w < 2 * r) r = w / 2;
+                if (h < 2 * r) r = h / 2;
+                ctx.beginPath();
+                ctx.moveTo(x + r, y);
+                ctx.arcTo(x + w, y, x + w, y + h, r);
+                ctx.arcTo(x + w, y + h, x, y + h, r);
+                ctx.arcTo(x, y + h, x, y, r);
+                ctx.arcTo(x, y, x + w, y, r);
+                ctx.closePath();
+            } else {
+                sealCanvas.classList.add('canvas-circle');
+                const radiusX = halfWidth - currentBorderWidth / 2;
+                const radiusY = halfHeight - currentBorderWidth / 2;
+                ctx.beginPath();
+                ctx.ellipse(halfWidth, halfHeight, radiusX, radiusY, 0, 0, Math.PI * 2);
+            }
+            ctx.stroke();
+            drawCharacters();
+        }
 
-                if (!username || !password || !urlSuffix) {
-                    showSettingsMessage('帳號、密碼和代碼不能為空！', 'error');
-                    return;
-                }
-                
-                const redirectUrl = URL_PREFIX + urlSuffix;
+        function getCharBoundingBox(char) {
+            const w = char.size * char.scaleX;
+            const h = char.size * char.scaleY;
+            return { x: char.x - w / 2, y: char.y - h / 2, width: w, height: h };
+        }
 
-                if (userId) { // 編輯模式
-                    const userIndex = users.findIndex(u => u.id == userId);
-                    if (userIndex > -1) {
-                        if (users.some(u => u.username === username && u.id != userId)) {
-                            showSettingsMessage('此帳號名稱已被使用！', 'error'); return;
-                        }
-                        users[userIndex] = { ...users[userIndex], username, password, redirectUrl };
-                        showSettingsMessage('帳號更新成功！');
+        function getHandlePositions(box) {
+            return {
+                'top-left': { x: box.x, y: box.y }, 'top-middle': { x: box.x + box.width / 2, y: box.y }, 'top-right': { x: box.x + box.width, y: box.y },
+                'middle-left': { x: box.x, y: box.y + box.height / 2 }, 'middle-right': { x: box.x + box.width, y: box.y + box.height / 2 },
+                'bottom-left': { x: box.x, y: box.y + box.height }, 'bottom-middle': { x: box.x + box.width / 2, y: box.y + box.height }, 'bottom-right': { x: box.x + box.width, y: box.y + box.height },
+            };
+        }
+
+        function drawCharacters() {
+            const selectedFont = fontFamily.value;
+            const isManualMode = manualAdjustToggle.checked;
+            characters.forEach((c, index) => {
+                ctx.save();
+                ctx.fillStyle = '#c53030';
+                ctx.font = `bold ${c.size}px ${selectedFont}`;
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.translate(c.x, c.y); ctx.scale(c.scaleX, c.scaleY);
+                ctx.fillText(c.char, 0, 0);
+                ctx.restore();
+                if (isManualMode && index === selectedCharIndex) {
+                    ctx.save();
+                    const box = getCharBoundingBox(c);
+                    ctx.strokeStyle = 'rgba(0, 100, 255, 0.7)'; ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 3]); ctx.strokeRect(box.x, box.y, box.width, box.height); ctx.setLineDash([]);
+                    const handles = getHandlePositions(box);
+                    for (const pos of Object.values(handles)) {
+                        ctx.fillStyle = 'rgba(0, 100, 255, 1)'; ctx.strokeStyle = 'white'; ctx.lineWidth = 1.5;
+                        ctx.fillRect(pos.x - resizeHandleSize / 2, pos.y - resizeHandleSize / 2, resizeHandleSize, resizeHandleSize);
+                        ctx.strokeRect(pos.x - resizeHandleSize / 2, pos.y - resizeHandleSize / 2, resizeHandleSize, resizeHandleSize);
                     }
-                } else { // 新增模式
-                    if (users.some(u => u.username === username)) {
-                        showSettingsMessage('此帳號名稱已被使用！', 'error'); return;
-                    }
-                    users.push({ id: Date.now(), username, password, redirectUrl });
-                    showSettingsMessage('帳號新增成功！');
+                    ctx.restore();
                 }
-
-                saveUsers();
-                renderUserList();
-                resetAccountForm();
             });
-            
-            userList.addEventListener('click', (e) => {
-                const target = e.target;
-                const id = target.dataset.id;
-                
-                if (target.classList.contains('edit-btn')) {
-                    const user = users.find(u => u.id == id);
-                    if (user) {
-                        editUserIdInput.value = user.id;
-                        accountUsernameInput.value = user.username;
-                        accountPasswordInput.value = user.password;
-                        let suffix = user.redirectUrl;
-                        if(suffix.startsWith(URL_PREFIX)) {
-                           suffix = suffix.substring(URL_PREFIX.length);
-                        }
-                        accountRedirectUrlInput.value = suffix;
-                        accountFormSubmitButton.textContent = '更新帳號';
-                        accountFormSubmitButton.classList.remove('bg-green-500', 'hover:bg-green-600');
-                        accountFormSubmitButton.classList.add('bg-blue-500', 'hover:bg-blue-600');
-                        cancelEditButton.classList.remove('hidden');
-                        accountUsernameInput.focus();
-                    }
-                } else if (target.classList.contains('delete-btn')) {
-                    if (confirm(`確定要刪除這個帳號嗎？`)) {
-                        users = users.filter(u => u.id != id);
-                        saveUsers();
-                        renderUserList();
-                        resetAccountForm();
-                        showSettingsMessage('帳號已刪除！');
-                    }
+        }
+
+        function updateManualControls() {
+            const controls = [fontSize, scaleX, scaleY];
+            if (selectedCharIndex !== -1 && characters[selectedCharIndex]) {
+                const char = characters[selectedCharIndex];
+                manualHint.style.display = 'none';
+                controls.forEach(el => el.disabled = false);
+                fontSize.value = char.size; fontSizeValue.textContent = Math.round(char.size);
+                scaleX.value = char.scaleX * 100; scaleXValue.textContent = Math.round(char.scaleX * 100);
+                scaleY.value = char.scaleY * 100; scaleYValue.textContent = Math.round(char.scaleY * 100);
+            } else {
+                manualHint.style.display = 'block';
+                controls.forEach(el => el.disabled = true);
+            }
+        }
+
+        function saveState() {
+            const state = {
+                text: sealText.value, shape: sealShape.value, font: fontFamily.value,
+                width: sealWidth.value, height: sealHeight.value, borderWidth: borderWidth.value,
+                cornerRadius: cornerRadius.value,
+                manualMode: manualAdjustToggle.checked,
+                characters: JSON.parse(JSON.stringify(characters))
+            };
+            history = history.slice(0, historyIndex + 1);
+            history.push(state);
+            historyIndex++;
+            updateHistoryButtons();
+        }
+
+        function applyState(state) {
+            sealText.value = state.text; sealShape.value = state.shape; fontFamily.value = state.font;
+            sealWidth.value = state.width; sealHeight.value = state.height; borderWidth.value = state.borderWidth;
+            cornerRadius.value = state.cornerRadius || 0;
+            manualAdjustToggle.checked = state.manualMode;
+            manualControls.classList.toggle('hidden', !state.manualMode);
+            sealCanvas.classList.toggle('editable', state.manualMode);
+            toggleCornerRadiusVisibility();
+            characters = JSON.parse(JSON.stringify(state.characters));
+            updateCanvasAndRedraw(false);
+            updateManualControls();
+            saveState(); // Add the loaded state as a new history point
+        }
+
+        function undo() { if (historyIndex > 0) { historyIndex--; applyStateFromHistory(); } }
+        function redo() { if (historyIndex < history.length - 1) { historyIndex++; applyStateFromHistory(); } }
+
+        function applyStateFromHistory() {
+            const state = history[historyIndex];
+            sealText.value = state.text; sealShape.value = state.shape; fontFamily.value = state.font;
+            sealWidth.value = state.width; sealHeight.value = state.height; borderWidth.value = state.borderWidth;
+            cornerRadius.value = state.cornerRadius || 0;
+            manualAdjustToggle.checked = state.manualMode;
+            manualControls.classList.toggle('hidden', !state.manualMode);
+            sealCanvas.classList.toggle('editable', state.manualMode);
+            toggleCornerRadiusVisibility();
+            characters = JSON.parse(JSON.stringify(state.characters));
+            updateCanvasAndRedraw(false);
+            updateManualControls();
+            updateHistoryButtons();
+        }
+
+        function updateHistoryButtons() {
+            undoBtn.disabled = historyIndex <= 0;
+            redoBtn.disabled = historyIndex >= history.length - 1;
+        }
+
+        function getMousePos(evt) {
+            const rect = sealCanvas.getBoundingClientRect();
+            return { x: (evt.clientX - rect.left) / rect.width * sealCanvas.width, y: (evt.clientY - rect.top) / rect.height * sealCanvas.height };
+        }
+
+        function getHandleAtPos(pos, char) {
+            if (!char) return null;
+            const box = getCharBoundingBox(char);
+            const handles = getHandlePositions(box);
+            const handleArea = resizeHandleSize * 1.5;
+            for (const [name, handlePos] of Object.entries(handles)) {
+                if (pos.x > handlePos.x - handleArea / 2 && pos.x < handlePos.x + handleArea / 2 && pos.y > handlePos.y - handleArea / 2 && pos.y < handlePos.y + handleArea / 2) return name;
+            }
+            return null;
+        }
+
+        function handleMouseDown(e) {
+            if (!manualAdjustToggle.checked) return;
+            e.preventDefault();
+            const pos = getMousePos(e);
+            const handle = getHandleAtPos(pos, characters[selectedCharIndex]);
+            if (selectedCharIndex !== -1 && handle) {
+                isResizing = true; resizeHandle = handle;
+                charStart = JSON.parse(JSON.stringify(characters[selectedCharIndex]));
+                dragStartX = pos.x; dragStartY = pos.y;
+                return;
+            }
+            let clickedIndex = -1;
+            for (let i = characters.length - 1; i >= 0; i--) {
+                const box = getCharBoundingBox(characters[i]);
+                if (pos.x > box.x && pos.x < box.x + box.width && pos.y > box.y && pos.y < box.y + box.height) {
+                    clickedIndex = i; break;
                 }
+            }
+            if (clickedIndex !== -1) {
+                selectedCharIndex = clickedIndex; isDragging = true;
+                charStart = { ...characters[selectedCharIndex] };
+                dragStartX = pos.x; dragStartY = pos.y;
+            } else {
+                selectedCharIndex = -1;
+            }
+            updateManualControls(); generateSeal();
+        }
+
+        function handleMouseMove(e) {
+            if (!manualAdjustToggle.checked) return;
+            const pos = getMousePos(e);
+            if (isResizing) {
+                const char = characters[selectedCharIndex];
+                const dx = pos.x - dragStartX; const dy = pos.y - dragStartY;
+                let newWidth = charStart.size * charStart.scaleX; let newHeight = charStart.size * charStart.scaleY;
+                let newX = charStart.x; let newY = charStart.y;
+                if (resizeHandle.includes('top')) { newHeight -= dy; newY += dy / 2; }
+                if (resizeHandle.includes('bottom')) { newHeight += dy; newY += dy / 2; }
+                if (resizeHandle.includes('left')) { newWidth -= dx; newX += dx / 2; }
+                if (resizeHandle.includes('right')) { newWidth += dx; newX += dx / 2; }
+                if (e.shiftKey && resizeHandle.includes('-')) {
+                    const originalRatio = (charStart.size * charStart.scaleX) / (charStart.size * charStart.scaleY);
+                    if (Math.abs(newWidth) / Math.abs(newHeight) > originalRatio) newHeight = newWidth / originalRatio * Math.sign(newHeight) * Math.sign(newWidth);
+                    else newWidth = newHeight * originalRatio * Math.sign(newWidth) * Math.sign(newHeight);
+                    if (resizeHandle.includes('top')) newY = charStart.y + (charStart.size * charStart.scaleY - newHeight) / 2;
+                    if (resizeHandle.includes('bottom')) newY = charStart.y + (newHeight - charStart.size * charStart.scaleY) / 2;
+                    if (resizeHandle.includes('left')) newX = charStart.x + (charStart.size * charStart.scaleX - newWidth) / 2;
+                    if (resizeHandle.includes('right')) newX = charStart.x + (newWidth - charStart.size * charStart.scaleX) / 2;
+                }
+                if (Math.abs(newWidth) > 10) { char.scaleX = newWidth / char.size; char.x = newX; }
+                if (Math.abs(newHeight) > 10) { char.scaleY = newHeight / char.size; char.y = newY; }
+                updateManualControls(); generateSeal();
+            } else if (isDragging) {
+                const dx = pos.x - dragStartX; const dy = pos.y - dragStartY;
+                characters[selectedCharIndex].x = charStart.x + dx; characters[selectedCharIndex].y = charStart.y + dy;
+                generateSeal();
+            } else {
+                const handle = getHandleAtPos(pos, characters[selectedCharIndex]);
+                if (handle) {
+                    if ((handle.includes('top') && handle.includes('left')) || (handle.includes('bottom') && handle.includes('right'))) sealCanvas.style.cursor = 'nwse-resize';
+                    else if ((handle.includes('top') && handle.includes('right')) || (handle.includes('bottom') && handle.includes('left'))) sealCanvas.style.cursor = 'nesw-resize';
+                    else if (handle.includes('top') || handle.includes('bottom')) sealCanvas.style.cursor = 'ns-resize';
+                    else if (handle.includes('left') || handle.includes('right')) sealCanvas.style.cursor = 'ew-resize';
+                } else {
+                    let onChar = false;
+                    for (const char of characters) { if (pos.x > getCharBoundingBox(char).x && pos.x < getCharBoundingBox(char).x + getCharBoundingBox(char).width && pos.y > getCharBoundingBox(char).y && pos.y < getCharBoundingBox(char).y + getCharBoundingBox(char).height) { onChar = true; break; } }
+                    sealCanvas.style.cursor = onChar ? 'grab' : 'default';
+                }
+            }
+        }
+        function handleMouseUp() {
+            if (isDragging || isResizing) saveState();
+            isDragging = false; isResizing = false; resizeHandle = null;
+            sealCanvas.style.cursor = manualAdjustToggle.checked ? 'default' : '';
+        }
+
+        function toggleCornerRadiusVisibility() {
+            cornerRadiusContainer.classList.toggle('hidden', sealShape.value !== 'square');
+        }
+
+        function setupEventListeners() {
+            // --- Controls that reset character layout ---
+            [sealText, sealWidth, sealHeight].forEach(el => el.addEventListener('input', () => { resetCharacterState(true); updateCanvasAndRedraw(false); }));
+            sealShape.addEventListener('input', () => {
+                toggleCornerRadiusVisibility();
+                resetCharacterState(true);
+                updateCanvasAndRedraw(false);
             });
 
-            cancelEditButton.addEventListener('click', resetAccountForm);
+            // --- Controls that only update styles, preserving layout ---
+            [fontFamily, borderWidth, cornerRadius].forEach(el => {
+                el.addEventListener('input', () => updateCanvasAndRedraw(false)); // Live update without saving history yet
+                el.addEventListener('change', () => updateCanvasAndRedraw(true)); // Save history on mouse up
+            });
 
-            function resetAccountForm() {
-                accountForm.reset();
-                editUserIdInput.value = '';
-                accountFormSubmitButton.textContent = '新增帳號';
-                accountFormSubmitButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
-                accountFormSubmitButton.classList.add('bg-green-500', 'hover:bg-green-600');
-                cancelEditButton.classList.add('hidden');
-            }
-
-            function showSettingsMessage(message, type = 'success') {
-                settingsMessage.textContent = message;
-                settingsMessage.className = `mb-2 text-center font-medium h-5 ${type === 'error' ? 'text-red-500' : 'text-green-600'}`;
-                setTimeout(() => { settingsMessage.textContent = ''; }, 3000);
-            }
-            
-            function escapeHTML(str) {
-                const p = document.createElement('p');
-                p.textContent = str;
-                return p.innerHTML;
-            }
-            
-            // 初始化
-            loadCommunityName();
-            loadRememberedUser();
-        });
+            manualAdjustToggle.addEventListener('change', () => {
+                manualControls.classList.toggle('hidden', !manualAdjustToggle.checked);
+                sealCanvas.classList.toggle('editable', manualAdjustToggle.checked);
+                if (!manualAdjustToggle.checked) { selectedCharIndex = -1; sealCanvas.style.cursor = ''; }
+                updateManualControls(); generateSeal(); saveState();
+            });
+            [fontSize, scaleX, scaleY].forEach(slider => {
+                slider.addEventListener('input', () => {
+                    if (selectedCharIndex > -1) {
+                        const char = characters[selectedCharIndex];
+                        char.size = parseFloat(fontSize.value); char.scaleX = parseFloat(scaleX.value) / 100; char.scaleY = parseFloat(scaleY.value) / 100;
+                        updateManualControls(); generateSeal();
+                    }
+                });
+                slider.addEventListener('change', () => { if (selectedCharIndex > -1) saveState() });
+            });
+            borderWidth.addEventListener('input', () => borderWidthValue.textContent = borderWidth.value);
+            cornerRadius.addEventListener('input', () => cornerRadiusValue.textContent = cornerRadius.value);
+            fontSize.addEventListener('input', () => fontSizeValue.textContent = fontSize.value);
+            scaleX.addEventListener('input', () => scaleXValue.textContent = scaleX.value);
+            scaleY.addEventListener('input', () => scaleYValue.textContent = scaleY.value);
+            sealCanvas.addEventListener('mousedown', handleMouseDown);
+            sealCanvas.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            undoBtn.addEventListener('click', undo); redoBtn.addEventListener('click', redo);
+            resetBtn.addEventListener('click', () => {
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                modal.innerHTML = `
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm">
+                        <h3 class="text-lg font-bold mb-4">確認重設</h3>
+                        <p class="text-sm mb-6">您確定要重設所有設定嗎？此動作將清除所有編輯且無法復原。</p>
+                        <div class="flex justify-end space-x-4">
+                            <button id="cancelReset" class="px-4 py-2 rounded bg-gray-200 dark:bg-gray-600 hover:bg-gray-300">取消</button>
+                            <button id="confirmReset" class="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700">確定重設</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                document.getElementById('cancelReset').onclick = () => document.body.removeChild(modal);
+                document.getElementById('confirmReset').onclick = () => {
+                    history = []; historyIndex = -1;
+                    resetCharacterState(true);
+                    updateCanvasAndRedraw(false);
+                    document.body.removeChild(modal);
+                };
+            });
+            downloadBtn.addEventListener('click', () => {
+                selectedCharIndex = -1; generateSeal();
+                const link = document.createElement('a'); link.download = `印章_${sealText.value}.png`;
+                link.href = sealCanvas.toDataURL('image/png'); link.click();
+            });
+            saveJsonBtn.addEventListener('click', () => {
+                if (historyIndex < 0) return;
+                const state = history[historyIndex];
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                downloadAnchorNode.setAttribute("download", `印章設定_${state.text}.json`);
+                document.body.appendChild(downloadAnchorNode);
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+            });
+            loadJsonBtn.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const state = JSON.parse(e.target.result);
+                        applyState(state);
+                    } catch (err) {
+                        messageBox.textContent = '匯入失敗：檔案格式錯誤。';
+                        setTimeout(() => messageBox.textContent = '', 3000);
+                    } finally {
+                        fileInput.value = '';
+                    }
+                };
+                reader.readAsText(file);
+            });
+        }
+        window.onload = () => {
+            setupEventListeners();
+            resetCharacterState(true);
+            updateCanvasAndRedraw(false);
+            toggleCornerRadiusVisibility();
+        };
     </script>
 </body>
 </html>
